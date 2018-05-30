@@ -1,14 +1,8 @@
-OS = Mac
-
 # indicate the Hardware Image file
-HDA_IMG = hdc-0.11.img
+ROOTIMAGE = hdc-0.11.img
 
 # indicate the path of the calltree
 CALLTREE=$(shell find tools/ -name "calltree" -perm 755 -type f)
-
-# indicate the path of the bochs
-#BOCHS=$(shell find tools/ -name "bochs" -perm 755 -type f)
-BOCHS=bochs
 
 #
 # if you want the ram-disk device, define this to be the
@@ -28,7 +22,7 @@ CPP	+= -Iinclude
 # This can be either FLOPPY, /dev/xxxx or empty, in which case the
 # default of /dev/hd6 is used by 'build'.
 #
-ROOT_DEV= #FLOPPY 
+ROOT_DEV= #FLOPPY
 
 ARCHIVES=kernel/kernel.o mm/mm.o fs/fs.o
 DRIVERS =kernel/blk_drv/blk_drv.a kernel/chr_drv/chr_drv.a
@@ -103,7 +97,7 @@ tmp.s:	boot/bootsect.s tools/system
 
 clean:
 	@rm -f Image System.map tmp_make core boot/bootsect boot/setup
-	@rm -f init/*.o tools/system boot/*.o typescript* info bochsout.txt
+	@rm -f init/*.o tools/system boot/*.o typescript* info
 	@for i in mm fs kernel lib boot; do make clean -C $$i; done 
 info:
 	@make clean
@@ -115,7 +109,6 @@ distclean: clean
 	@rm -f tag cscope* linux-0.11.* $(CALLTREE)
 	@(find tools/calltree-2.3 -name "*.o" | xargs -i rm -f {})
 	@make clean -C tools/calltree-2.3
-	@make clean -C tools/bochs/bochs-2.3.7
 
 backup: clean
 	@(cd .. ; tar cf - linux | compress16 - > backup.Z)
@@ -134,25 +127,18 @@ tags:
 cscope:
 	@cscope -Rbkq
 
+rootimage:
+	@curl http://oldlinux.org/Linux.old/Linux-0.11/images/rootimage-0.11.Z -o rootimage-0.11.Z
+	@uncompress rootimage-0.11.Z
+
+rootimage-clean:
+	@$(RM) rootimage-0.11
+	
 start:
-	@qemu-system-x86_64 -m 16M -boot a -fda Image -hda $(HDA_IMG)
+	@qemu-system-x86_64 -m 16M -boot a -fda Image -hda $(ROOTIMAGE)
 
 debug:
-	@echo $(OS)
-	@qemu-system-x86_64 -m 16M -boot a -fda Image -hda $(HDA_IMG) -s -S
-
-bochs-debug:
-	@$(BOCHS) -q -f tools/bochs/bochsrc/bochsrc-hd-dbg.bxrc	
-
-bochs:
-ifeq ($(BOCHS),)
-	@(cd tools/bochs/bochs-2.3.7; \
-	./configure --enable-plugins --enable-disasm --enable-gdb-stub;\
-	make)
-endif
-
-bochs-clean:
-	@make clean -C tools/bochs/bochs-2.3.7
+	@qemu-system-x86_64 -m 16M -boot a -fda Image -hda $(ROOTIMAGE) -s -S
 
 calltree:
 ifeq ($(CALLTREE),)
@@ -184,7 +170,7 @@ help:
 	@echo ""
 	@echo "Note!:"
 	@echo "     * You need to install the following basic tools:"
-	@echo "          ubuntu|debian, qemu|bochs, ctags, cscope, calltree, graphviz "
+	@echo "          ubuntu|debian, qemu, ctags, cscope, calltree, graphviz "
 	@echo "          vim-full, build-essential, hex, dd, gcc 4.3.2..."
 	@echo "     * Becarefull to change the compiling options, which will heavily"
 	@echo "     influence the compiling procedure and running result."
@@ -203,8 +189,8 @@ help:
 
 ### Dependencies:
 init/main.o: init/main.c include/unistd.h include/sys/stat.h \
-  include/sys/types.h include/sys/times.h include/sys/utsname.h \
-  include/utime.h include/time.h include/linux/tty.h include/termios.h \
-  include/linux/sched.h include/linux/head.h include/linux/fs.h \
-  include/linux/mm.h include/signal.h include/asm/system.h \
-  include/asm/io.h include/stddef.h include/stdarg.h include/fcntl.h
+ include/sys/types.h include/sys/times.h include/sys/utsname.h \
+ include/utime.h include/time.h include/linux/tty.h include/termios.h \
+ include/linux/sched.h include/linux/head.h include/linux/fs.h \
+ include/linux/mm.h include/signal.h include/asm/system.h \
+ include/asm/io.h include/stddef.h include/stdarg.h include/fcntl.h
